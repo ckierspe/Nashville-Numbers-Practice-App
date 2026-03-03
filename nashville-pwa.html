@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Nashville #s" />
+  <meta name="theme-color" content="#111008" />
+  <title>Nashville Number System</title>
+
+  <!-- Inline manifest via JS blob (no server needed) -->
+  <script>
+    const manifest = {
+      name: "Nashville Number System",
+      short_name: "Nashville #s",
+      description: "Flashcards and live MD practice for the Nashville Number System",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#111008",
+      theme_color: "#111008",
+      orientation: "portrait-primary",
+      icons: [
+        { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23111008'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle' fill='%23f0c84a' font-family='Georgia,serif'%3E%23%3C/text%3E%3C/svg%3E", sizes: "512x512", type: "image/svg+xml" }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+    const manifestURL = URL.createObjectURL(blob);
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.head.appendChild(link);
+  </script>
+
+  <!-- Apple touch icon inline SVG -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23111008'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle' fill='%23f0c84a' font-family='Georgia,serif'%3E%23%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #111008;
+      --bg2: #17110a;
+      --bg3: #1e1608;
+      --border: #2a2010;
+      --border2: #3a2e1a;
+      --gold: #f0c84a;
+      --gold2: #c8901a;
+      --gold3: #a08040;
+      --gold4: #6a5030;
+      --gold5: #4a3820;
+      --text: #e8d9b0;
+      --text2: #c8a050;
+      --text3: #8a7450;
+      --red: #f06040;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Georgia, 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 12px 16px 8px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-eyebrow {
+      font-size: 9px; letter-spacing: 0.4em; color: var(--gold3);
+      text-transform: uppercase; margin-bottom: 2px;
+    }
+    .header h1 {
+      font-size: clamp(18px, 5vw, 26px); font-weight: normal;
+      color: var(--gold); letter-spacing: 0.04em;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex; flex-shrink: 0;
+      border-bottom: 1px solid var(--border2);
+    }
+    .tab-btn {
+      flex: 1; padding: 10px 4px;
+      background: transparent; border: none; border-bottom: 2px solid transparent;
+      color: var(--text3); font-family: inherit; font-size: 11px;
+      letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
+      transition: all 0.2s; -webkit-appearance: none;
+    }
+    .tab-btn.active {
+      color: var(--gold); border-bottom-color: var(--gold2);
+    }
+
+    /* Scroll area */
+    .tab-content {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 16px;
+    }
+
+    /* ===== FLASHCARDS ===== */
+    .card-counter {
+      text-align: center; font-size: 11px; color: var(--gold4);
+      letter-spacing: 0.1em; margin-bottom: 10px;
+    }
+    .flashcard {
+      min-height: 200px; border-radius: 10px;
+      padding: 24px 20px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; cursor: pointer;
+      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+      -webkit-user-select: none; user-select: none;
+      margin-bottom: 16px;
+    }
+    .flashcard.question {
+      background: var(--bg2); border: 1px solid var(--border2);
+    }
+    .flashcard.answer {
+      background: var(--bg3); border: 1px solid var(--gold3);
+      box-shadow: 0 0 24px rgba(180,120,20,0.12);
+    }
+    .card-side-label {
+      font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--gold4); margin-bottom: 12px;
+    }
+    .card-text {
+      font-size: clamp(15px, 4vw, 18px); line-height: 1.6;
+    }
+    .card-text.q { color: var(--gold); }
+    .card-text.a { color: var(--text2); }
+
+    .card-nav {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .card-dots {
+      display: flex; flex-wrap: wrap; gap: 4px; justify-content: center;
+      margin-top: 8px;
+    }
+    .card-dot {
+      width: 10px; height: 10px; border-radius: 2px; cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    /* ===== REFERENCE ===== */
+    .key-selector {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      margin-bottom: 16px; justify-content: center;
+    }
+    .key-btn {
+      padding: 5px 10px; border-radius: 4px; border: 1px solid; cursor: pointer;
+      font-family: inherit; font-size: 13px; transition: all 0.15s;
+      -webkit-appearance: none;
+    }
+    .key-btn.active { background: var(--bg3); border-color: var(--gold2); color: var(--gold); }
+    .key-btn.inactive { background: transparent; border-color: var(--border2); color: var(--gold4); }
+
+    .chord-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px; margin-bottom: 20px;
+    }
+    .chord-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 10px;
+    }
+    .chord-number { font-size: 28px; color: var(--gold); line-height: 1; }
+    .chord-roman { font-size: 10px; color: var(--gold4); }
+    .chord-note { font-size: 17px; color: var(--text); margin-top: 4px; }
+    .chord-quality { font-size: 11px; margin-left: 4px; }
+    .chord-quality.maj { color: var(--gold3); }
+    .chord-quality.min { color: #9a7070; }
+    .chord-quality.dim { color: #7a5858; }
+
+    .prog-section-title {
+      font-size: 9px; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--gold4); margin-bottom: 10px;
+      border-top: 1px solid var(--border); padding-top: 14px;
+    }
+    .prog-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .prog-name { font-size: 11px; color: var(--gold4); min-width: 100px; }
+    .prog-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .prog-chip {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 3px; padding: 2px 6px; font-size: 13px;
+    }
+    .prog-chip-num { color: var(--gold); }
+    .prog-chip-note { color: var(--gold5); font-size: 10px; }
+
+    /* ===== MD ===== */
+    .md-settings {
+      display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
+    }
+    .setting-box {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px;
+    }
+    .setting-label {
+      font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--gold4); margin-bottom: 8px; display: block;
+    }
+    .mini-key-selector {
+      display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .mini-key-btn {
+      padding: 4px 9px; border-radius: 3px; border: 1px solid;
+      cursor: pointer; font-family: inherit; font-size: 12px;
+      transition: all 0.15s; -webkit-appearance: none;
+    }
+    .mini-key-btn.active { background: var(--bg3); border-color: var(--gold2); color: var(--gold); }
+    .mini-key-btn.inactive { background: transparent; border-color: var(--border2); color: var(--gold4); }
+
+    input[type=range] {
+      width: 100%; accent-color: var(--gold2); cursor: pointer;
+      -webkit-appearance: none; height: 4px;
+      background: linear-gradient(to right, var(--gold2) 0%, var(--gold2) var(--val, 50%), var(--border2) var(--val, 50%));
+      border-radius: 2px; outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 22px; height: 22px;
+      border-radius: 50%; background: var(--gold2);
+      box-shadow: 0 0 8px rgba(200,144,26,0.4);
+    }
+    .bpm-presets { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .beats-selector { display: flex; gap: 6px; }
+    .beats-btn {
+      flex: 1; padding: 7px; font-family: inherit; font-size: 15px;
+      border-radius: 4px; border: 1px solid; cursor: pointer;
+      transition: all 0.15s; -webkit-appearance: none;
+    }
+    .beats-btn.active { background: var(--bg3); border-color: var(--gold2); color: var(--gold); }
+    .beats-btn.inactive { background: transparent; border-color: var(--border); color: var(--gold4); }
+
+    select.prog-select {
+      width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+      color: var(--text); padding: 8px; font-family: inherit; font-size: 13px;
+      border-radius: 4px; cursor: pointer; -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a5030' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+
+    /* MD Display */
+    .md-display {
+      background: #0e0b05; border-radius: 10px;
+      padding: 16px; margin-bottom: 14px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      border: 2px solid var(--border);
+    }
+    .md-display.playing {
+      border-color: #6a4820;
+      box-shadow: 0 0 30px rgba(180,100,10,0.1);
+    }
+    .md-idle {
+      text-align: center; color: var(--gold5); padding: 20px 0;
+    }
+    .md-idle-icon { font-size: 48px; margin-bottom: 8px; }
+    .md-idle-text { font-size: 13px; letter-spacing: 0.08em; }
+
+    .beat-dots {
+      display: flex; justify-content: center; gap: 10px; margin-bottom: 12px;
+    }
+    .beat-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--border); transition: background 0.05s, box-shadow 0.05s;
+    }
+    .beat-dot.active {
+      background: var(--gold2);
+      box-shadow: 0 0 10px rgba(200,144,26,0.7);
+    }
+    .beat-dot.flash { background: var(--gold); }
+
+    .current-chord-display { text-align: center; margin-bottom: 12px; }
+    .now-playing-label {
+      font-size: 9px; letter-spacing: 0.3em; color: var(--gold4);
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .big-number {
+      font-size: clamp(80px, 22vw, 120px); line-height: 0.9;
+      font-weight: bold; letter-spacing: -0.02em;
+      transition: color 0.08s;
+      color: var(--gold);
+    }
+    .big-number.flash { color: #fff8d0; }
+    .chord-name-display { font-size: 22px; color: var(--text2); margin-top: 4px; }
+    .chord-quality-display { font-size: 14px; color: var(--gold4); margin-left: 6px; }
+
+    .up-next-box {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px; text-align: center;
+    }
+    .up-next-label { font-size: 9px; letter-spacing: 0.3em; color: var(--gold5); text-transform: uppercase; }
+    .up-next-chord { font-size: 18px; color: var(--text3); margin-top: 2px; }
+
+    .queue-preview {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      justify-content: center; margin-bottom: 14px;
+    }
+    .queue-chip {
+      width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+      border-radius: 4px; border: 1px solid; font-size: 15px;
+      transition: all 0.2s;
+    }
+    .queue-chip.current { background: var(--bg3); border-color: var(--gold2); color: var(--gold); }
+    .queue-chip.other { background: var(--bg2); border-color: var(--border); color: var(--gold5); }
+
+    /* Shared buttons */
+    .btn {
+      padding: 9px 20px; border-radius: 5px; border: 1px solid;
+      font-family: inherit; font-size: 12px; letter-spacing: 0.1em;
+      text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+      -webkit-appearance: none; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary { background: var(--bg3); border-color: var(--gold2); color: var(--gold); }
+    .btn-danger  { background: #2a1208; border-color: #c84a20; color: var(--red); }
+    .btn-secondary { background: transparent; border-color: var(--border2); color: var(--text3); }
+    .btn-disabled { background: transparent; border-color: var(--border); color: var(--border2); cursor: not-allowed; }
+    .btn-large {
+      padding: 14px 40px; font-size: 14px; letter-spacing: 0.2em;
+      display: block; width: 100%; text-align: center;
+    }
+
+    .divider {
+      height: 1px; background: linear-gradient(to right, transparent, var(--gold3), transparent);
+      margin: 4px auto 10px; max-width: 300px;
+    }
+
+    /* Install banner */
+    #install-banner {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--bg3); border-top: 1px solid var(--gold2);
+      padding: 12px 16px calc(12px + var(--safe-bottom));
+      z-index: 100; flex-direction: column; gap: 8px;
+    }
+    #install-banner.visible { display: flex; }
+    .install-text { font-size: 13px; color: var(--text2); line-height: 1.4; }
+    .install-steps { font-size: 11px; color: var(--gold4); line-height: 1.8; }
+    .install-dismiss {
+      background: transparent; border: 1px solid var(--border2); color: var(--text3);
+      padding: 6px 14px; border-radius: 4px; font-family: inherit;
+      font-size: 11px; cursor: pointer; align-self: flex-end;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-eyebrow">♪ Practice Tool</div>
+    <h1>Nashville Number System</h1>
+    <div class="divider"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="flashcards">Flashcards</button>
+    <button class="tab-btn" data-tab="reference">Key Ref</button>
+    <button class="tab-btn" data-tab="md">Music Director</button>
+  </div>
+
+  <!-- FLASHCARDS -->
+  <div class="tab-content" id="tab-flashcards">
+    <div class="card-counter" id="card-counter"></div>
+    <div class="flashcard question" id="flashcard" onclick="flipCard()">
+      <div class="card-side-label" id="card-side-label">Question — tap to reveal</div>
+      <div class="card-text q" id="card-text"></div>
+    </div>
+    <div class="card-nav">
+      <button class="btn btn-secondary" id="btn-prev" onclick="prevCard()">← Prev</button>
+      <button class="btn btn-primary" id="btn-flip" onclick="flipCard()">Show Answer</button>
+      <button class="btn btn-secondary" id="btn-next" onclick="nextCard()">Next →</button>
+      <button class="btn btn-secondary" onclick="shuffleCards()">⇌ Shuffle</button>
+    </div>
+    <div class="card-dots" id="card-dots"></div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div class="tab-content" id="tab-reference" style="display:none">
+    <div class="key-selector" id="ref-key-selector"></div>
+    <div class="chord-grid" id="chord-grid"></div>
+    <div class="prog-section-title" id="prog-section-title"></div>
+    <div id="prog-list"></div>
+  </div>
+
+  <!-- MD -->
+  <div class="tab-content" id="tab-md" style="display:none">
+    <div class="md-settings">
+      <div class="setting-box">
+        <span class="setting-label">Key</span>
+        <div class="mini-key-selector" id="md-key-selector"></div>
+      </div>
+      <div class="setting-box">
+        <span class="setting-label" id="bpm-label">Tempo: <span id="bpm-val">80</span> BPM</span>
+        <input type="range" id="bpm-range" min="40" max="200" value="80" oninput="updateBpm(this.value)" />
+        <div class="bpm-presets">
+          <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="setBpm(60)">60</button>
+          <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="setBpm(80)">80</button>
+          <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="setBpm(100)">100</button>
+          <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="setBpm(120)">120</button>
+          <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px" onclick="setBpm(140)">140</button>
+        </div>
+      </div>
+      <div class="setting-box">
+        <span class="setting-label">Beats per Chord</span>
+        <div class="beats-selector" id="beats-selector"></div>
+      </div>
+      <div class="setting-box">
+        <span class="setting-label">Progression</span>
+        <select class="prog-select" id="prog-select" onchange="setProgression(this.value)"></select>
+      </div>
+    </div>
+
+    <div class="md-display" id="md-display">
+      <div class="md-idle" id="md-idle">
+        <div class="md-idle-icon">♩</div>
+        <div class="md-idle-text">Press Start to begin</div>
+      </div>
+      <div id="md-playing" style="display:none">
+        <div class="beat-dots" id="beat-dots"></div>
+        <div class="current-chord-display">
+          <div class="now-playing-label">Now Playing</div>
+          <div class="big-number" id="big-number">1</div>
+          <div class="chord-name-display">
+            <span id="chord-note"></span>
+            <span class="chord-quality-display" id="chord-quality"></span>
+          </div>
+        </div>
+        <div class="up-next-box">
+          <div class="up-next-label">Up Next</div>
+          <div class="up-next-chord" id="up-next-chord"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="queue-preview" id="queue-preview"></div>
+    <button class="btn btn-primary btn-large" id="start-stop-btn" onclick="toggleMD()">▶ Start</button>
+  </div>
+</div>
+
+<!-- Install banner for iOS -->
+<div id="install-banner">
+  <div class="install-text">📲 Add to your Home Screen for the best experience</div>
+  <div class="install-steps">Tap the <strong style="color:#f0c84a">Share</strong> button → <strong style="color:#f0c84a">Add to Home Screen</strong></div>
+  <button class="install-dismiss" onclick="dismissInstall()">Got it</button>
+</div>
+
+<script>
+// ===== DATA =====
+const KEYS = ["C","Db","D","Eb","E","F","F#","G","Ab","A","Bb","B"];
+const NOTES = ["C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B"];
+const SCALE_INTERVALS = [0,2,4,5,7,9,11];
+const CHORD_QUALITIES = ["maj","min","min","maj","maj","min","dim"];
+const ROMAN = ["I","II","III","IV","V","VI","VII"];
+
+const PROGRESSIONS = [
+  { name: "Classic Country",  numbers: [1,1,4,4,5,5,1,1] },
+  { name: "I-IV-V Boogie",    numbers: [1,4,1,1,4,4,1,1,5,4,1,5] },
+  { name: "Pop 4-Chord",      numbers: [1,5,6,4,1,5,6,4] },
+  { name: "12-Bar Blues",     numbers: [1,1,1,1,4,4,1,1,5,4,1,5] },
+  { name: "ii-V-I Jazz",      numbers: [2,5,1,1] },
+  { name: "50s Doo-Wop",      numbers: [1,6,4,5,1,6,4,5] },
+  { name: "Gospel Praise",    numbers: [1,4,1,5,1,4,5,1] },
+  { name: "Random",           numbers: [] },
+];
+
+const FLASHCARD_DATA = [
+  { q: "What does '1' represent in any key?", a: "The tonic (home chord) — the root of the key. Everything resolves here." },
+  { q: "What chord is the '4' in the key of G?", a: "C major — the fourth scale degree of G major." },
+  { q: "What chord is the '5' in the key of A?", a: "E major — the fifth scale degree. The dominant chord, creates tension." },
+  { q: "What is a '1-4-5' progression?", a: "The most common progression in country/rock. Tonic → Subdominant → Dominant." },
+  { q: "What does a flat before a number mean? (e.g. b7)", a: "Lower that scale degree by a half step. Common in blues and rock." },
+  { q: "What does a minus sign mean? (e.g. 6-)", a: "The chord is minor. Nashville uses '-' or lowercase for minor chords." },
+  { q: "What is a '1-5-6m-4' progression?", a: "The most popular pop progression. Used in thousands of songs." },
+  { q: "What does '2m' or '2-' mean?", a: "The minor chord built on the 2nd scale degree. Often used as a ii-V-I setup." },
+  { q: "What chord is the '6' in the key of C?", a: "A minor — the relative minor. Has a sad, emotional quality." },
+  { q: "What does a triangle (△) after a number mean?", a: "Major 7th chord. Adds a dreamy, jazzy color to the chord." },
+  { q: "What does '7' typically sound like?", a: "Diminished or half-diminished — tense, unstable, often used as a passing chord." },
+  { q: "What key are you in if '1' is D?", a: "The key of D major." },
+  { q: "In a Nashville chart, what does a diamond shape around a number mean?", a: "Hold that chord for a full measure (whole note feel)." },
+  { q: "What is a 'turnaround'?", a: "A quick progression at the end of a section (often 1-6-2-5) that leads back to the 1." },
+  { q: "What's the difference between '5' and '5-'?", a: "'5' is a major dominant chord. '5-' would be a minor 5th — less common, used for a darker feel." },
+  { q: "What chord does '2' represent in the key of F?", a: "G minor — the second scale degree of F major." },
+  { q: "What is a common ending chord pattern in country?", a: "Often ends on 1, sometimes preceded by a 4-5-1 (amen cadence)." },
+  { q: "What does a '/' in a Nashville chart mean? (e.g. 1/3)", a: "Slash chord — the first number is the chord, the second is the bass note. 1/3 = tonic chord with 3rd in bass." },
+];
+
+// ===== STATE =====
+let currentTab = "flashcards";
+let selectedKey = "G";
+let cardIndex = 0;
+let cardFlipped = false;
+let shuffledCards = [...FLASHCARD_DATA].sort(() => Math.random() - 0.5);
+
+let bpm = 80;
+let beatsPerChord = 4;
+let selectedProgression = 0;
+let isPlaying = false;
+let mdInterval = null;
+let beatCount = 0;
+let progressionQueue = [];
+let progressionPos = 0;
+let currentBeatInChord = 0;
+
+// ===== UTILS =====
+function getScaleChords(key) {
+  const root = KEYS.indexOf(key);
+  return SCALE_INTERVALS.map((interval, i) => ({
+    number: i + 1,
+    note: NOTES[(root + interval) % 12],
+    quality: CHORD_QUALITIES[i],
+    roman: ROMAN[i],
+  }));
+}
+
+// ===== TABS =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById('tab-' + tab).style.display = 'block';
+    currentTab = tab;
+    if (tab === 'reference') renderReference();
+    if (tab === 'md') renderMDSettings();
+  });
+});
+
+// ===== FLASHCARDS =====
+function renderCards() {
+  const card = shuffledCards[cardIndex];
+  document.getElementById('card-counter').textContent = `${cardIndex + 1} / ${shuffledCards.length}`;
+
+  const fc = document.getElementById('flashcard');
+  const label = document.getElementById('card-side-label');
+  const text = document.getElementById('card-text');
+  const flipBtn = document.getElementById('btn-flip');
+
+  if (cardFlipped) {
+    fc.className = 'flashcard answer';
+    label.textContent = 'Answer';
+    text.className = 'card-text a';
+    text.textContent = card.a;
+    flipBtn.textContent = 'Hide Answer';
+  } else {
+    fc.className = 'flashcard question';
+    label.textContent = 'Question — tap to reveal';
+    text.className = 'card-text q';
+    text.textContent = card.q;
+    flipBtn.textContent = 'Show Answer';
+  }
+
+  document.getElementById('btn-prev').className = cardIndex === 0 ? 'btn btn-disabled' : 'btn btn-secondary';
+  document.getElementById('btn-next').className = cardIndex === shuffledCards.length - 1 ? 'btn btn-disabled' : 'btn btn-secondary';
+
+  const dots = document.getElementById('card-dots');
+  dots.innerHTML = '';
+  shuffledCards.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'card-dot';
+    d.style.background = i === cardIndex ? '#c8901a' : i < cardIndex ? '#3a2a08' : '#221a08';
+    d.style.border = `1px solid ${i === cardIndex ? '#f0a030' : '#2a2010'}`;
+    d.onclick = () => { cardIndex = i; cardFlipped = false; renderCards(); };
+    dots.appendChild(d);
+  });
+}
+
+function flipCard() { cardFlipped = !cardFlipped; renderCards(); }
+function prevCard() { if (cardIndex > 0) { cardIndex--; cardFlipped = false; renderCards(); } }
+function nextCard() { if (cardIndex < shuffledCards.length - 1) { cardIndex++; cardFlipped = false; renderCards(); } }
+function shuffleCards() {
+  shuffledCards = [...FLASHCARD_DATA].sort(() => Math.random() - 0.5);
+  cardIndex = 0; cardFlipped = false; renderCards();
+}
+
+// Swipe on flashcard
+let touchStartX = 0;
+document.getElementById('flashcard').addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+document.getElementById('flashcard').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) { if (dx < 0) nextCard(); else prevCard(); }
+  else flipCard();
+}, {passive:true});
+
+// ===== REFERENCE =====
+function renderReference() {
+  const chords = getScaleChords(selectedKey);
+
+  // Key selector
+  const ks = document.getElementById('ref-key-selector');
+  ks.innerHTML = '';
+  KEYS.forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'key-btn ' + (k === selectedKey ? 'active' : 'inactive');
+    btn.textContent = k;
+    btn.onclick = () => { selectedKey = k; renderReference(); };
+    ks.appendChild(btn);
+  });
+
+  // Chord grid
+  const grid = document.getElementById('chord-grid');
+  grid.innerHTML = '';
+  chords.forEach(chord => {
+    const card = document.createElement('div');
+    card.className = 'chord-card';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span class="chord-number">${chord.number}</span>
+        <span class="chord-roman">${chord.roman}</span>
+      </div>
+      <div class="chord-note">${chord.note}<span class="chord-quality ${chord.quality}">${chord.quality === 'maj' ? 'major' : chord.quality === 'min' ? 'minor' : 'dim'}</span></div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Progressions
+  document.getElementById('prog-section-title').textContent = `Common Progressions in ${selectedKey}`;
+  const pl = document.getElementById('prog-list');
+  pl.innerHTML = '';
+  PROGRESSIONS.slice(0, -1).forEach(prog => {
+    const row = document.createElement('div');
+    row.className = 'prog-row';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'prog-name';
+    nameEl.textContent = prog.name;
+    const chips = document.createElement('div');
+    chips.className = 'prog-chips';
+    prog.numbers.forEach(n => {
+      const ch = chords[n - 1];
+      const chip = document.createElement('div');
+      chip.className = 'prog-chip';
+      chip.innerHTML = `<span class="prog-chip-num">${n}</span><span class="prog-chip-note"> (${ch.note})</span>`;
+      chips.appendChild(chip);
+    });
+    row.appendChild(nameEl);
+    row.appendChild(chips);
+    pl.appendChild(row);
+  });
+}
+
+// ===== MD SETTINGS =====
+function renderMDSettings() {
+  // Key selector
+  const ks = document.getElementById('md-key-selector');
+  ks.innerHTML = '';
+  KEYS.forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'mini-key-btn ' + (k === selectedKey ? 'active' : 'inactive');
+    btn.textContent = k;
+    btn.onclick = () => { if (!isPlaying) { selectedKey = k; renderMDSettings(); } };
+    ks.appendChild(btn);
+  });
+
+  // BPM
+  document.getElementById('bpm-val').textContent = bpm;
+  const range = document.getElementById('bpm-range');
+  range.value = bpm;
+  const pct = ((bpm - 40) / 160 * 100).toFixed(1) + '%';
+  range.style.setProperty('--val', pct);
+
+  // Beats per chord
+  const bs = document.getElementById('beats-selector');
+  bs.innerHTML = '';
+  [1, 2, 4, 8].forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'beats-btn ' + (b === beatsPerChord ? 'active' : 'inactive');
+    btn.textContent = b;
+    btn.onclick = () => { if (!isPlaying) { beatsPerChord = b; renderMDSettings(); } };
+    bs.appendChild(btn);
+  });
+
+  // Progression select
+  const sel = document.getElementById('prog-select');
+  sel.innerHTML = '';
+  PROGRESSIONS.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = p.name;
+    if (i === selectedProgression) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.disabled = isPlaying;
+
+  // Beat dots
+  renderBeatDots();
+}
+
+function setProgression(val) { selectedProgression = Number(val); }
+function updateBpm(val) {
+  bpm = Number(val);
+  document.getElementById('bpm-val').textContent = bpm;
+  const pct = ((bpm - 40) / 160 * 100).toFixed(1) + '%';
+  document.getElementById('bpm-range').style.setProperty('--val', pct);
+  if (isPlaying) { clearInterval(mdInterval); startMDInterval(); }
+}
+function setBpm(val) {
+  document.getElementById('bpm-range').value = val;
+  updateBpm(val);
+}
+
+function renderBeatDots() {
+  const container = document.getElementById('beat-dots');
+  container.innerHTML = '';
+  for (let i = 0; i < beatsPerChord; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'beat-dot' + (i === currentBeatInChord && isPlaying ? ' active' : '');
+    dot.id = `beat-dot-${i}`;
+    container.appendChild(dot);
+  }
+}
+
+// ===== MD ENGINE =====
+function generateQueue() {
+  if (selectedProgression === PROGRESSIONS.length - 1) {
+    return Array.from({ length: 16 }, () => Math.floor(Math.random() * 7) + 1);
+  }
+  const p = PROGRESSIONS[selectedProgression].numbers;
+  return [...p, ...p];
+}
+
+function toggleMD() {
+  if (isPlaying) stopMD(); else startMD();
+}
+
+function startMD() {
+  progressionQueue = generateQueue();
+  progressionPos = 0;
+  beatCount = 0;
+  currentBeatInChord = 0;
+  isPlaying = true;
+
+  document.getElementById('md-display').classList.add('playing');
+  document.getElementById('md-idle').style.display = 'none';
+  document.getElementById('md-playing').style.display = 'block';
+  document.getElementById('start-stop-btn').className = 'btn btn-danger btn-large';
+  document.getElementById('start-stop-btn').textContent = '■ Stop';
+
+  renderBeatDots();
+  updateMDDisplay();
+  renderQueue();
+  renderMDSettings();
+  startMDInterval();
+}
+
+function startMDInterval() {
+  const ms = (60 / bpm) * 1000;
+  mdInterval = setInterval(onBeat, ms);
+}
+
+function stopMD() {
+  clearInterval(mdInterval);
+  isPlaying = false;
+  currentBeatInChord = 0;
+
+  document.getElementById('md-display').classList.remove('playing');
+  document.getElementById('md-idle').style.display = 'block';
+  document.getElementById('md-playing').style.display = 'none';
+  document.getElementById('start-stop-btn').className = 'btn btn-primary btn-large';
+  document.getElementById('start-stop-btn').textContent = '▶ Start';
+  document.getElementById('queue-preview').innerHTML = '';
+  renderMDSettings();
+}
+
+function onBeat() {
+  beatCount++;
+  currentBeatInChord = (beatCount - 1) % beatsPerChord;
+
+  // Update beat dots
+  for (let i = 0; i < beatsPerChord; i++) {
+    const dot = document.getElementById(`beat-dot-${i}`);
+    if (dot) {
+      dot.className = 'beat-dot' + (i === currentBeatInChord ? ' active' : '');
+    }
+  }
+
+  if (currentBeatInChord === 0 && beatCount > 1) {
+    progressionPos = (progressionPos + 1) % progressionQueue.length;
+    updateMDDisplay(true);
+    renderQueue();
+  }
+}
+
+function updateMDDisplay(flash) {
+  const chords = getScaleChords(selectedKey);
+  const n = progressionQueue[progressionPos];
+  const nextN = progressionQueue[(progressionPos + 1) % progressionQueue.length];
+  const chord = chords[n - 1];
+  const nextChord = chords[nextN - 1];
+
+  const bigNum = document.getElementById('big-number');
+  bigNum.textContent = n;
+  document.getElementById('chord-note').textContent = chord.note;
+  document.getElementById('chord-quality').textContent = chord.quality;
+  document.getElementById('up-next-chord').textContent = `${nextN} — ${nextChord.note} ${nextChord.quality}`;
+
+  if (flash) {
+    bigNum.classList.add('flash');
+    setTimeout(() => bigNum.classList.remove('flash'), 120);
+  }
+}
+
+function renderQueue() {
+  const qp = document.getElementById('queue-preview');
+  qp.innerHTML = '';
+  progressionQueue.forEach((n, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'queue-chip ' + (i === progressionPos ? 'current' : 'other');
+    chip.textContent = n;
+    qp.appendChild(chip);
+  });
+}
+
+// ===== iOS INSTALL BANNER =====
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone === true;
+const dismissed = localStorage.getItem('install-dismissed');
+if (isIOS && !isStandalone && !dismissed) {
+  setTimeout(() => {
+    document.getElementById('install-banner').classList.add('visible');
+  }, 2000);
+}
+function dismissInstall() {
+  localStorage.setItem('install-dismissed', '1');
+  document.getElementById('install-banner').classList.remove('visible');
+}
+
+// ===== SERVICE WORKER (offline support) =====
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'nashville-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['.'])));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+// ===== INIT =====
+renderCards();
+renderReference();
+renderMDSettings();
+</script>
+</body>
+</html>
